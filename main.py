@@ -13,13 +13,13 @@ JOB_SKILLS_FILE_ID = "1om4qOQvcz28IWFAjhYKqg9M-VsePtnN5"
 JOB_SUMMARY_FILE_ID = "1r_4dpd5i0ED89j15DSj39xSRc11dVIT_"
 LINKEDIN_POSTINGS_FILE_ID = "1oYv4uueQgE7VVpa4Mjfj-8N0kOGrPAla"
 
-# === Helper: Download CSV from Google Drive using gdown ===
-def load_csv_from_gdrive(file_id: str) -> pd.DataFrame:
+# === Helper: Download & Stream-Limited CSV from Google Drive ===
+def load_csv_from_gdrive(file_id: str, nrows=5000) -> pd.DataFrame:
     url = f"https://drive.google.com/uc?id={file_id}"
-    output_path = f"/tmp/{file_id}.csv"  # Safe path for Render
+    output_path = f"/tmp/{file_id}.csv"
     if not os.path.exists(output_path):
         gdown.download(url, output_path, quiet=False)
-    return pd.read_csv(output_path)
+    return pd.read_csv(output_path, nrows=nrows)  # Stream-limited for Render
 
 # === Load and Prepare Job Dataset ===
 def load_and_prepare_job_data():
@@ -56,7 +56,7 @@ def load_and_prepare_job_data():
 
     return merged_df
 
-# Load once on startup
+# Load dataset once at startup
 job_roles_df = load_and_prepare_job_data()
 
 # === Request Schema ===
@@ -66,7 +66,7 @@ class InputData(BaseModel):
     current_position: str
     desired_role: str
 
-# === Core Skill Recommendation Logic ===
+# === Core Recommendation Logic ===
 def recommend_skills(user_skills, desired_role):
     titles = job_roles_df['title'].str.lower().tolist()
     closest = get_close_matches(desired_role.lower(), titles, n=1, cutoff=0.5)
