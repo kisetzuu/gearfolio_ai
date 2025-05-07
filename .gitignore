@@ -1,0 +1,13 @@
+# Ignore original large datasets
+linkedin_job_postings.csv
+job_summary.csv
+job_skills.csv
+
+# Ignore temporary files and system files
+*.pyc
+__pycache__/
+.DS_Store
+Thumbs.db
+
+# Optional: Ignore merged output if you use reconstruction
+*_merged.csv
