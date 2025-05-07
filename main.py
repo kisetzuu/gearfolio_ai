@@ -14,7 +14,7 @@ JOB_SUMMARY_FILE_ID = "1r_4dpd5i0ED89j15DSj39xSRc11dVIT_"
 LINKEDIN_POSTINGS_FILE_ID = "1oYv4uueQgE7VVpa4Mjfj-8N0kOGrPAla"
 
 # === Download CSV with streaming limit ===
-def load_csv_from_gdrive(file_id: str, nrows=1000) -> pd.DataFrame:
+def load_csv_from_gdrive(file_id: str, nrows=500) -> pd.DataFrame:
     try:
         print(f"⬇️ Downloading file ID: {file_id}")
         url = f"https://drive.google.com/uc?id={file_id}"
@@ -30,13 +30,13 @@ def load_csv_from_gdrive(file_id: str, nrows=1000) -> pd.DataFrame:
 # === Load and prepare dataset ===
 def load_and_prepare_job_data():
     print("📥 Loading job_skills.csv...")
-    skills_df = load_csv_from_gdrive(JOB_SKILLS_FILE_ID)
+    skills_df = load_csv_from_gdrive(JOB_SKILLS_FILE_ID, nrows=500)
 
     print("📥 Loading job_summary.csv...")
-    summary_df = load_csv_from_gdrive(JOB_SUMMARY_FILE_ID)
+    summary_df = load_csv_from_gdrive(JOB_SUMMARY_FILE_ID, nrows=500)
 
     print("📥 Loading linkedin_job_postings.csv...")
-    linkedin_df = load_csv_from_gdrive(LINKEDIN_POSTINGS_FILE_ID)
+    linkedin_df = load_csv_from_gdrive(LINKEDIN_POSTINGS_FILE_ID, nrows=500)
 
     # Check required columns
     required_checks = [
