@@ -2,14 +2,27 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
 import pandas as pd
+import requests
+from io import StringIO
 from difflib import get_close_matches
 
 app = FastAPI()
 
-# Load and prepare dataset
+# === Google Drive File IDs ===
+JOB_SKILLS_FILE_ID = "1om4qOQvcz28IWFAjhYKqg9M-VsePtnN5"
+LINKEDIN_POSTINGS_FILE_ID = "1oYv4uueQgE7VVpa4Mjfj-8N0kOGrPAla"
+
+# === Helper to load CSV from Google Drive ===
+def load_csv_from_gdrive(file_id):
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    response = requests.get(url)
+    response.raise_for_status()
+    return pd.read_csv(StringIO(response.text))
+
+# === Load and Prepare Job Dataset ===
 def load_and_prepare_job_data():
-    skills_df = pd.read_csv(r'C:\Users\kulai\OneDrive\Desktop\Job-Skill Recommendation\job_skills.csv')
-    linkedin_df = pd.read_csv(r'C:\Users\kulai\OneDrive\Desktop\Job-Skill Recommendation\linkedin_job_postings.csv')
+    skills_df = load_csv_from_gdrive(JOB_SKILLS_FILE_ID)
+    linkedin_df = load_csv_from_gdrive(LINKEDIN_POSTINGS_FILE_ID)
 
     # Clean missing skill data
     skills_df['job_skills'] = skills_df['job_skills'].fillna('').astype(str)
@@ -27,16 +40,17 @@ def load_and_prepare_job_data():
 
     return job_roles_df
 
+# Load once at startup
 job_roles_df = load_and_prepare_job_data()
 
-# Request body structure
+# === Request Body Schema ===
 class InputData(BaseModel):
     skills: List[str]
     interests: List[str]
     current_position: str
     desired_role: str
 
-# Core recommendation logic
+# === Core Recommendation Logic ===
 def recommend_skills(user_skills, desired_role):
     titles = job_roles_df['title'].str.lower().tolist()
     closest = get_close_matches(desired_role.lower(), titles, n=1, cutoff=0.5)
@@ -51,7 +65,7 @@ def recommend_skills(user_skills, desired_role):
 
     return missing, f"Skills needed for {row.iloc[0]['title']}"
 
-# FastAPI route
+# === FastAPI Endpoint ===
 @app.post("/recommend")
 def get_recommendation(data: InputData):
     missing_skills, message = recommend_skills(data.skills, data.desired_role)
@@ -68,4 +82,3 @@ def get_recommendation(data: InputData):
         "missing_skills": missing_skills,
         "roadmap": roadmap
     }
-    
